@@ -2,6 +2,7 @@ package wordpress
 
 import (
 	"context"
+	"os"
 
 	"wordpress.com/internal"
 
@@ -14,7 +15,7 @@ import (
 
 func CreateWordpressDeployment(wname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments("bibek")
+	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -106,7 +107,7 @@ func int32ptr(i int32) *int32 {
 
 func CreateWordpressService(wname string, port int32) error {
 	clientset := internal.GetConfig()
-	servicesClinet := clientset.CoreV1().Services("bibek")
+	servicesClinet := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wname,
@@ -143,7 +144,7 @@ func CreateWordpressService(wname string, port int32) error {
 
 func CreateWordpressPVC(pname string) error {
 	clinetset := internal.GetConfig()
-	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims("bibek")
+	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{

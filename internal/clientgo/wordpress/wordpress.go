@@ -4,9 +4,7 @@ import (
 	"wordpress.com/internal/clientgo"
 )
 
-type WordPress struct {
-	Name string `json:"name"`
-}
+type WordPress struct{}
 
 func NewWordPress(wp *WordPress) clientgo.AppInterface {
 	if wp == nil {
@@ -15,9 +13,7 @@ func NewWordPress(wp *WordPress) clientgo.AppInterface {
 	return wp
 }
 
-func NewWordpressApp(wname string) clientgo.AppInterface {
-
-	w := NewWordPress(&WordPress{Name: wname})
-
+func NewWordpressApp() clientgo.AppInterface {
+	w := NewWordPress(&WordPress{})
 	return w
 }

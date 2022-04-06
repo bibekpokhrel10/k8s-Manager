@@ -6,49 +6,77 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"wordpress.com/internal/clientgo"
 	"wordpress.com/internal/clientgo/wordpress"
 )
 
+type RequestApp struct {
+	Name    string `json:"name"`
+	Port    string `json:"port"`
+	App     string `json:"app"`
+	Object  string `json:"object"`
+	Replica string `json:"replica"`
+}
+
 func AppCreate(c *gin.Context) {
-	appname := c.Request.URL.Query().Get("app")
-	wname := c.Request.URL.Query().Get("name")
-	port := c.Request.URL.Query().Get("port")
-	p, err := strconv.Atoi(port)
+	rac := RequestApp{}
+	err := c.ShouldBindJSON(&rac)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err)
+		return
+	}
+	p, err := strconv.Atoi(rac.Port)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if appname == "wordpress" {
-		wp := wordpress.NewWordpressApp(wname)
-		err = wp.Create(wname, int32(p))
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"Error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"Created Wordpress App": true})
+	var ap clientgo.AppInterface
+	if rac.App == "wordpress" {
+		ap = wordpress.NewWordpressApp()
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong App name"})
+		return
 	}
+	err = ap.Create(rac.Name, int32(p))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"Created Wordpress App": true})
 }
 
 func AppDelete(c *gin.Context) {
-	appname := c.Request.URL.Query().Get("app")
-	wname := c.Request.URL.Query().Get("name")
-	if appname == "wordpress" {
-		wp := wordpress.NewWordpressApp(wname)
-		err := wp.Delete(wname)
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"Error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"Delete wordpress App": wname})
-	} else {
-		c.JSON(http.StatusOK, gin.H{"Error": "Wrong App Name"})
+	rac := RequestApp{}
+	err := c.ShouldBindJSON(&rac)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err)
+		return
 	}
+	var ap clientgo.AppInterface
+	if rac.App == "wordpress" {
+		ap = wordpress.NewWordpressApp()
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong App Name"})
+		return
+	}
+	err = ap.Delete(rac.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"Deleted " + rac.App + " App": rac.Name})
 }
 
 func ListAll(c *gin.Context) {
-	wp := wordpress.NewWordpressApp("wordpress")
-	servicesName, deploymentsName, podsName, pvcsName := wp.List()
-
+	appname := c.Request.URL.Query().Get("app")
+	var ap clientgo.AppInterface
+	if appname == "wordpress" {
+		ap = wordpress.NewWordpressApp()
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong App name"})
+		return
+	}
+	servicesName, deploymentsName, podsName, pvcsName := ap.List()
 	c.JSON(http.StatusOK, gin.H{"Service List": servicesName,
 		"Deployment list": deploymentsName,
 		"Pod list":        podsName,
@@ -56,66 +84,82 @@ func ListAll(c *gin.Context) {
 }
 
 func GetDetails(c *gin.Context) {
-	oname := c.Request.URL.Query().Get("object")
-	dname := c.Request.URL.Query().Get("name")
-
-	wp := wordpress.NewWordpressApp(dname)
-	if oname == "deployment" {
-		Deploymentdetail, _, err := wp.Detail(dname, "deployment")
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"Error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{dname + " Details": Deploymentdetail})
-	} else if oname == "service" {
-		_, Servicedetail, err := wp.Detail(dname, "service")
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"Error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{dname + " Details": Servicedetail})
+	appname := c.Request.URL.Query().Get("app")
+	object := c.Request.URL.Query().Get("object")
+	name := c.Request.URL.Query().Get("name")
+	var ap clientgo.AppInterface
+	if appname == "wordpress" {
+		ap = wordpress.NewWordpressApp()
 	} else {
-		c.JSON(http.StatusOK, gin.H{"Error": "Wrong object Name"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong App Name"})
+		return
+	}
+	switch object {
+	case "deployment":
+		Deploymentdetail, _, err := ap.Detail(name, "deployment")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{name + " Details": Deploymentdetail})
+		return
+	case "service":
+		_, Servicedetail, err := ap.Detail(name, "service")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{name + " Details": Servicedetail})
+		return
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong object Name"})
+		return
 	}
 }
 
 func AppUpdate(c *gin.Context) {
-	oname := c.Request.URL.Query().Get("object")
-	switch oname {
+	rac := RequestApp{}
+	err := c.ShouldBindJSON(&rac)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err)
+		return
+	}
+	var ap clientgo.AppInterface
+	if rac.App == "wordpress" {
+		ap = wordpress.NewWordpressApp()
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong App Name"})
+	}
+	switch rac.Object {
 	case "deployment":
-		dname := c.Request.URL.Query().Get("name")
-		replicas := c.Request.URL.Query().Get("replicas")
-		replica, err := strconv.Atoi(replicas)
+		replica, err := strconv.Atoi(rac.Replica)
 		if err != nil {
 			log.Error(err)
+			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
-		wp := wordpress.NewWordpressApp(dname)
-		err = wp.Update(int32(replica), dname, oname)
+		err = ap.Update(int32(replica), rac.Name, rac.Object)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"Error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"Updated Deployment": "Success"})
 		return
 	case "service":
-		dname := c.Request.URL.Query().Get("name")
-		port := c.Request.URL.Query().Get("port")
-		nport, err := strconv.Atoi(port)
+		nport, err := strconv.Atoi(rac.Port)
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		wp := wordpress.NewWordpressApp(dname)
-		err = wp.Update(int32(nport), dname, oname)
+		err = ap.Update(int32(nport), rac.Name, rac.Object)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"Error": err.Error()})
+			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"Updated Service Port number": true})
 		return
 	default:
-		c.JSON(http.StatusOK, gin.H{"Error": "Wrong Object Name"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong Object Name"})
 	}
 
 }

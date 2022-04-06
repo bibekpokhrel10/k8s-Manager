@@ -2,6 +2,7 @@ package wordpress
 
 import (
 	"context"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,7 +14,7 @@ import (
 
 func CreateSecretKey() {
 	clientset := internal.GetConfig()
-	secretClinet := clientset.CoreV1().Secrets("bibek")
+	secretClinet := clientset.CoreV1().Secrets(os.Getenv("NAMESPACE"))
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mysql-pass",
@@ -46,7 +47,7 @@ func CreateSecretKey() {
 
 func CreateDatabasePvc(pname string) error {
 	clinetset := internal.GetConfig()
-	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims("bibek")
+	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,7 +80,7 @@ func CreateDatabasePvc(pname string) error {
 
 func CreateDatabaseDeployment(dname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments("bibek")
+	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -157,7 +158,7 @@ func CreateDatabaseDeployment(dname string) error {
 
 func CreateDatabaseService(dname string) error {
 	clientset := internal.GetConfig()
-	servicesClinet := clientset.CoreV1().Services("bibek")
+	servicesClinet := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

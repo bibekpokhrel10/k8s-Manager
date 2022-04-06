@@ -2,6 +2,7 @@ package wordpress
 
 import (
 	"context"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +11,7 @@ import (
 
 func (wp *WordPress) List() ([]string, []string, []string, []string) {
 	clientset := internal.GetConfig()
-	servicelist, err := clientset.CoreV1().Services("bibek").List(context.Background(), metav1.ListOptions{})
+	servicelist, err := clientset.CoreV1().Services(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, nil, nil, nil
@@ -20,7 +21,7 @@ func (wp *WordPress) List() ([]string, []string, []string, []string) {
 		services = append(services, service.Name)
 	}
 
-	deploymentlist, err := clientset.AppsV1().Deployments("bibek").List(context.Background(), metav1.ListOptions{})
+	deploymentlist, err := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, nil, nil, nil
@@ -30,7 +31,7 @@ func (wp *WordPress) List() ([]string, []string, []string, []string) {
 		deployments = append(deployments, deploy.Name)
 	}
 
-	podlist, err := clientset.CoreV1().Pods("bibek").List(context.Background(), metav1.ListOptions{})
+	podlist, err := clientset.CoreV1().Pods(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, nil, nil, nil
@@ -41,7 +42,7 @@ func (wp *WordPress) List() ([]string, []string, []string, []string) {
 	}
 
 	var pvcs []string
-	pvclist, err := clientset.CoreV1().PersistentVolumeClaims("bibek").List(context.Background(), metav1.ListOptions{})
+	pvclist, err := clientset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, nil, nil, nil

@@ -2,6 +2,7 @@ package wordpress
 
 import (
 	"context"
+	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wordpress.com/internal"
@@ -9,7 +10,7 @@ import (
 
 func (wp *WordPress) Delete(wname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments("bibek")
+	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
 	err := deploymentsClient.Delete(context.Background(), wname, metav1.DeleteOptions{})
 	var getErr error
 	if err != nil {
@@ -20,7 +21,7 @@ func (wp *WordPress) Delete(wname string) error {
 		getErr = err
 	}
 
-	servicesClinet := clientset.CoreV1().Services("bibek")
+	servicesClinet := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
 	err = servicesClinet.Delete(context.Background(), wname+"-mysql", metav1.DeleteOptions{})
 	if err != nil {
 		getErr = err
@@ -30,7 +31,7 @@ func (wp *WordPress) Delete(wname string) error {
 		getErr = err
 	}
 
-	pvcClient := clientset.CoreV1().PersistentVolumeClaims("bibek")
+	pvcClient := clientset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
 	err = pvcClient.Delete(context.Background(), wname+"-wp-pv-claim", metav1.DeleteOptions{})
 	if err != nil {
 		getErr = err
