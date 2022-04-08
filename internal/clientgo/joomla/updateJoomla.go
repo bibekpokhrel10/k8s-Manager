@@ -1,4 +1,4 @@
-package wordpress
+package joomla
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (wp *WordPress) Update(n int32, pname string, aname string) error {
+func (oc *Joomla) Update(n int32, pname string, aname string) error {
 	switch aname {
 	case "deployment":
 		err := UpdateDeployment(n, pname)

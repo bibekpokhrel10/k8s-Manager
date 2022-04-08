@@ -1,4 +1,4 @@
-package wordpress
+package joomla
 
 import (
 	"context"
@@ -10,12 +10,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (wp *WordPress) List() ([]string, []string, []string, []string, error) {
+func (op *Joomla) List() ([]string, []string, []string, []string, error) {
 	clientset := internal.GetConfig()
 	servicelist, err := clientset.CoreV1().Services(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
+	var getErr error
 	if err != nil {
 		log.Error(err)
-		return nil, nil, nil, nil, err
+		getErr = err
 	}
 	var services []string
 	for _, service := range servicelist.Items {
@@ -25,7 +26,7 @@ func (wp *WordPress) List() ([]string, []string, []string, []string, error) {
 	deploymentlist, err := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
-		return nil, nil, nil, nil, err
+		getErr = err
 	}
 	var deployments []string
 	for _, deploy := range deploymentlist.Items {
@@ -35,7 +36,7 @@ func (wp *WordPress) List() ([]string, []string, []string, []string, error) {
 	podlist, err := clientset.CoreV1().Pods(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
-		return nil, nil, nil, nil, err
+		getErr = err
 	}
 	var pods []string
 	for _, pod := range podlist.Items {
@@ -46,10 +47,13 @@ func (wp *WordPress) List() ([]string, []string, []string, []string, error) {
 	pvclist, err := clientset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE")).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
-		return nil, nil, nil, nil, err
+		getErr = err
 	}
 	for _, pvc := range pvclist.Items {
 		pvcs = append(pvcs, pvc.Name)
+	}
+	if getErr != nil {
+		return nil, nil, nil, nil, getErr
 	}
 	return services, deployments, pods, pvcs, nil
 }

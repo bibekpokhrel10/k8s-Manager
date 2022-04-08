@@ -6,7 +6,7 @@ import (
 )
 
 type AppInterface interface {
-	List() ([]string, []string, []string, []string)
+	List() ([]string, []string, []string, []string, error)
 	Detail(string, string) (*appsv1.Deployment, *v1.Service, error)
 	Create(string, int32) error
 	Update(int32, string, string) error

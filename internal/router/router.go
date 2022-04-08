@@ -3,8 +3,9 @@ package router
 import (
 	"net/http"
 
+	"k8smanager/internal/controllers"
+
 	"github.com/gin-gonic/gin"
-	"wordpress.com/internal/controllers"
 )
 
 func RouterHandle() {

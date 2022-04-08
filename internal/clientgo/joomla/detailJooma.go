@@ -1,4 +1,4 @@
-package wordpress
+package joomla
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (wp *WordPress) Detail(pname string, object string) (*appsv1.Deployment, *v1.Service, error) {
+func (oc *Joomla) Detail(pname string, object string) (*appsv1.Deployment, *v1.Service, error) {
 	if object == "deployment" {
 		deploymentdetails, err := DeploymentDetail(pname)
 		return deploymentdetails, nil, err

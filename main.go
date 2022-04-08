@@ -3,8 +3,9 @@ package main
 import (
 	"log"
 
+	"k8smanager/internal/router"
+
 	"github.com/joho/godotenv"
-	"wordpress.com/internal/router"
 )
 
 func main() {

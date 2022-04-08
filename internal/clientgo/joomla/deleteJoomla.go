@@ -1,4 +1,4 @@
-package wordpress
+package joomla
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (wp *WordPress) Delete(wname string) error {
+func (oc *Joomla) Delete(wname string) error {
 	clientset := internal.GetConfig()
 	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
 	err := deploymentsClient.Delete(context.Background(), wname, metav1.DeleteOptions{})
@@ -37,7 +37,7 @@ func (wp *WordPress) Delete(wname string) error {
 	}
 
 	pvcClient := clientset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
-	err = pvcClient.Delete(context.Background(), wname+"-wp-pv-claim", metav1.DeleteOptions{})
+	err = pvcClient.Delete(context.Background(), wname+"-jo-pv-claim", metav1.DeleteOptions{})
 	if err != nil {
 		log.Error(err)
 		getErr = err

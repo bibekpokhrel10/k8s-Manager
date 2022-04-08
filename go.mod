@@ -1,4 +1,4 @@
-module wordpress.com
+module k8smanager
 
 go 1.17
 

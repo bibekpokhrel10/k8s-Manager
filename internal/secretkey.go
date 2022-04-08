@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -15,7 +14,7 @@ func CreateSecretKey() {
 	secretClinet := clientset.CoreV1().Secrets(os.Getenv("NAMESPACE"))
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "mysql-pass",
+			Name: os.Getenv("SECRETNAME"),
 		},
 		Type: "Opaque",
 		Data: map[string][]byte{
@@ -33,7 +32,7 @@ func CreateSecretKey() {
 		}
 		log.Info("Secret Key Updated Successfully")
 	} else {
-		fmt.Println("Creating Secret Key")
+		log.Info("Creating Secret Key")
 		_, err = secretClinet.Create(context.Background(), secret, metav1.CreateOptions{})
 		if err != nil {
 			log.Error(err)

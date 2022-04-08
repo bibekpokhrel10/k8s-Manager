@@ -1,7 +1,7 @@
 package wordpress
 
 import (
-	"wordpress.com/internal/clientgo"
+	"k8smanager/internal/clientgo"
 )
 
 type WordPress struct{}

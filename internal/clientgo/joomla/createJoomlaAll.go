@@ -1,4 +1,4 @@
-package wordpress
+package joomla
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateWordpressDeployment(wname string) error {
+func CreateJoomlaDeployment(wname string) error {
 	clientset := internal.GetConfig()
 	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
 
@@ -42,15 +42,15 @@ func CreateWordpressDeployment(wname string) error {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Image: "wordpress:4.8-apache",
+							Image: "joomla",
 							Name:  wname,
 							Env: []corev1.EnvVar{
 								{
-									Name:  "WORDPRESS_DB_HOST",
+									Name:  "JOOMLA_DB_HOST",
 									Value: wname + "-mysql",
 								},
 								{
-									Name: "WORDPRESS_DB_PASSWORD",
+									Name: "JOOMLA_DB_PASSWORD",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											LocalObjectReference: corev1.LocalObjectReference{
@@ -70,7 +70,7 @@ func CreateWordpressDeployment(wname string) error {
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      wname + "-wordpress-persistent-storage",
+									Name:      wname + "-joomla-persistent-storage",
 									MountPath: "/var/www/html",
 								},
 							},
@@ -78,10 +78,10 @@ func CreateWordpressDeployment(wname string) error {
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: wname + "-wordpress-persistent-storage",
+							Name: wname + "-joomla-persistent-storage",
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: wname + "-wp-pv-claim",
+									ClaimName: wname + "-jo-pv-claim",
 								},
 							},
 						},
@@ -91,13 +91,13 @@ func CreateWordpressDeployment(wname string) error {
 		},
 	}
 
-	log.Info("Creating Wordpress deployment..")
+	log.Info("Creating Joomla deployment..")
 	result, err := deploymentsClient.Create(context.Background(), deployment, metav1.CreateOptions{})
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	log.Info("Created Wordpress deployment " + result.GetObjectMeta().GetName())
+	log.Info("Created Joomla deployment " + result.GetObjectMeta().GetName())
 	return nil
 }
 
@@ -115,19 +115,19 @@ func GetNamespace(namespace string) error {
 	return nil
 }
 
-func CreateWordpressService(wname string, port int32) error {
+func CreateJoomlaService(wname string, port int32) error {
 	clientset := internal.GetConfig()
-	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: wname + "-wp"}}
-	err := GetNamespace(wname + "-wp")
+	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: wname + "-joomla"}}
+	err := GetNamespace(wname + "-joomla")
 	if err != nil {
 		_, err = clientset.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
 		if err != nil {
-			log.Error("Failed to create namespace" + wname + "-wp")
+			log.Error("Failed to create namespace" + wname)
 			return err
 		}
 		log.Info("Created Namespace" + wname)
 	}
-	os.Setenv("NAMESPACE", wname+"-wp")
+	os.Setenv("NAMESPACE", wname+"-joomla")
 	servicesClinet := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -153,23 +153,23 @@ func CreateWordpressService(wname string, port int32) error {
 		},
 	}
 
-	log.Info("Creating Wordpress service...")
+	log.Info("Creating Joomla service...")
 	_, err = servicesClinet.Create(context.Background(), service, metav1.CreateOptions{})
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	log.Info("Wordpress Service Created Successfully!")
+	log.Info("Joomla Service Created Successfully!")
 	return nil
 }
 
-func CreateWordpressPVC(pname string) error {
+func CreateJoomlaPVC(pname string) error {
 	clinetset := internal.GetConfig()
 	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pname + "-wp-pv-claim",
+			Name:      pname + "-jo-pv-claim",
 			Namespace: os.Getenv("NAMESPACE"),
 			Labels: map[string]string{
 				"app": pname,
@@ -192,6 +192,6 @@ func CreateWordpressPVC(pname string) error {
 		log.Error(err)
 		return err
 	}
-	log.Info("Created Wordpress PVC")
+	log.Info("Created Joomla PVC")
 	return nil
 }
