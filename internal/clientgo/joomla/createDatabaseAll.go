@@ -2,7 +2,6 @@ package joomla
 
 import (
 	"context"
-	"os"
 
 	"k8smanager/internal"
 
@@ -13,20 +12,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateSecretKey() {
+func CreateSecretKey(wname string) {
 	clientset := internal.GetConfig()
-	secretClinet := clientset.CoreV1().Secrets(os.Getenv("NAMESPACE"))
+	secretClinet := clientset.CoreV1().Secrets(wname)
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "mysql-pass",
+			Name: wname + "-mysql-pass",
 		},
 		Type: "Opaque",
 		Data: map[string][]byte{
-			"Name":     []byte("mysql-pass"),
-			"password": []byte("password"),
+			"Name":     []byte(wname + "-mysql-pass"),
+			"password": []byte(wname),
 		},
 	}
-	_, err := secretClinet.Get(context.Background(), "mysql-pass", metav1.GetOptions{})
+	_, err := secretClinet.Get(context.Background(), wname+"-mysql-pass", metav1.GetOptions{})
 	if err == nil {
 		log.Info("Updating Secret Key")
 		_, err = secretClinet.Update(context.Background(), secret, metav1.UpdateOptions{})
@@ -48,12 +47,12 @@ func CreateSecretKey() {
 
 func CreateDatabasePvc(pname string) error {
 	clinetset := internal.GetConfig()
-	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
+	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(pname)
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pname + "-mysql-pv-claim",
-			Namespace: os.Getenv("NAMESPACE"),
+			Namespace: pname,
 			Labels: map[string]string{
 				"app": pname,
 			},
@@ -81,7 +80,7 @@ func CreateDatabasePvc(pname string) error {
 
 func CreateDatabaseDeployment(dname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
+	deploymentsClient := clientset.AppsV1().Deployments(dname)
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: dname + "-mysql",
@@ -113,7 +112,7 @@ func CreateDatabaseDeployment(dname string) error {
 							Env: []corev1.EnvVar{
 								{
 									Name:  "MYSQL_ROOT_PASSWORD",
-									Value: os.Getenv("PASSWORD"),
+									Value: dname,
 								},
 							},
 							Ports: []corev1.ContainerPort{
@@ -158,12 +157,12 @@ func CreateDatabaseDeployment(dname string) error {
 
 func CreateDatabaseService(dname string) error {
 	clientset := internal.GetConfig()
-	servicesClinet := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
+	servicesClinet := clientset.CoreV1().Services(dname)
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dname + "-mysql",
-			Namespace: os.Getenv("NAMESPACE"),
+			Namespace: dname,
 
 			Labels: map[string]string{
 				"app": dname,

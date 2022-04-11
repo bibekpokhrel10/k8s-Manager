@@ -2,7 +2,6 @@ package wordpress
 
 import (
 	"context"
-	"os"
 
 	"k8smanager/internal"
 
@@ -25,7 +24,7 @@ func (wp *WordPress) Update(n int32, pname string, aname string) error {
 func UpdateDeployment(n int32, pname string) error {
 	log.Info("Updating Deployment")
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
+	deploymentsClient := clientset.AppsV1().Deployments(pname)
 
 	result, err := deploymentsClient.Get(context.Background(), pname, metav1.GetOptions{})
 	if err != nil {
@@ -46,7 +45,7 @@ func UpdateDeployment(n int32, pname string) error {
 func UpdateService(n int32, pname string) error {
 	log.Info("Updating Service")
 	clientset := internal.GetConfig()
-	ServiceClient := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
+	ServiceClient := clientset.CoreV1().Services(pname)
 
 	result, err := ServiceClient.Get(context.Background(), pname, metav1.GetOptions{})
 	if err != nil {

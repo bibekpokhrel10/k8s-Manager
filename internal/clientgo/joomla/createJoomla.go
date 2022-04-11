@@ -1,14 +1,29 @@
 package joomla
 
-func (oc *Joomla) Create(wname string, port int32) error {
+func (jo *Joomla) Create(wname string, port int32) error {
 	err := CreateJoomlaService(wname, port)
 	if err == nil {
-		CreateSecretKey()
-		CreateDatabasePvc(wname)
-		CreateJoomlaPVC(wname)
-		CreateDatabaseService(wname)
-		CreateDatabaseDeployment(wname)
-		CreateJoomlaDeployment(wname)
+		CreateSecretKey(wname)
+		err = CreateDatabasePvc(wname)
+		if err != nil {
+			return err
+		}
+		err = CreateJoomlaPVC(wname)
+		if err != nil {
+			return err
+		}
+		err = CreateDatabaseService(wname)
+		if err != nil {
+			return err
+		}
+		err = CreateDatabaseDeployment(wname)
+		if err != nil {
+			return err
+		}
+		err = CreateJoomlaDeployment(wname)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	return err

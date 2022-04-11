@@ -2,7 +2,6 @@ package joomla
 
 import (
 	"context"
-	"os"
 
 	"k8smanager/internal"
 
@@ -15,7 +14,7 @@ import (
 
 func CreateJoomlaDeployment(wname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE"))
+	deploymentsClient := clientset.AppsV1().Deployments(wname)
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -54,9 +53,9 @@ func CreateJoomlaDeployment(wname string) error {
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											LocalObjectReference: corev1.LocalObjectReference{
-												Name: "mysql-pass",
+												Name: wname + "-mysql-pass",
 											},
-											Key: os.Getenv("PASSWORD"),
+											Key: "password",
 										},
 									},
 								},
@@ -105,7 +104,7 @@ func int32ptr(i int32) *int32 {
 	return &i
 }
 
-func GetNamespace(namespace string) error {
+func CheckNamespace(namespace string) error {
 	clientset := internal.GetConfig()
 	_, err := clientset.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 	if err != nil {
@@ -117,8 +116,8 @@ func GetNamespace(namespace string) error {
 
 func CreateJoomlaService(wname string, port int32) error {
 	clientset := internal.GetConfig()
-	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: wname + "-joomla"}}
-	err := GetNamespace(wname + "-joomla")
+	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: wname}}
+	err := CheckNamespace(wname)
 	if err != nil {
 		_, err = clientset.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
 		if err != nil {
@@ -127,12 +126,11 @@ func CreateJoomlaService(wname string, port int32) error {
 		}
 		log.Info("Created Namespace" + wname)
 	}
-	os.Setenv("NAMESPACE", wname+"-joomla")
-	servicesClinet := clientset.CoreV1().Services(os.Getenv("NAMESPACE"))
+	servicesClinet := clientset.CoreV1().Services(wname)
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wname,
-			Namespace: os.Getenv("NAMESPACE"),
+			Namespace: wname,
 			Labels: map[string]string{
 				"app": wname,
 			},
@@ -165,12 +163,12 @@ func CreateJoomlaService(wname string, port int32) error {
 
 func CreateJoomlaPVC(pname string) error {
 	clinetset := internal.GetConfig()
-	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(os.Getenv("NAMESPACE"))
+	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(pname)
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pname + "-jo-pv-claim",
-			Namespace: os.Getenv("NAMESPACE"),
+			Namespace: pname,
 			Labels: map[string]string{
 				"app": pname,
 			},

@@ -6,14 +6,7 @@ import (
 
 type Joomla struct{}
 
-func NewJoomla(oc *Joomla) clientgo.AppInterface {
-	if oc == nil {
-		return nil
-	}
-	return oc
-}
-
 func NewJoomlaApp() clientgo.AppInterface {
-	oc := NewJoomla(&Joomla{})
-	return oc
+	jo := &Joomla{}
+	return jo
 }

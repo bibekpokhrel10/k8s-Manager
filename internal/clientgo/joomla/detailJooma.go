@@ -2,7 +2,6 @@ package joomla
 
 import (
 	"context"
-	"os"
 
 	"k8smanager/internal"
 
@@ -12,21 +11,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (oc *Joomla) Detail(pname string, object string) (*appsv1.Deployment, *v1.Service, error) {
-	if object == "deployment" {
-		deploymentdetails, err := DeploymentDetail(pname)
-		return deploymentdetails, nil, err
+func (jo *Joomla) Detail(pname string) (*appsv1.Deployment, *v1.Service, error) {
+	deploymentdetails, err := DeploymentDetail(pname)
+	var getErr error
+	if err != nil {
+		getErr = err
 	}
-	if object == "service" {
-		servicedetails, err := ServiceDetail(pname)
-		return nil, servicedetails, err
+	servicedetails, err := ServiceDetail(pname)
+	if err != nil {
+		getErr = err
 	}
-	return nil, nil, nil
+	if getErr != nil {
+		return nil, nil, getErr
+	}
+	return deploymentdetails, servicedetails, nil
+
 }
 
 func DeploymentDetail(pname string) (*appsv1.Deployment, error) {
 	clientset := internal.GetConfig()
-	GetDeployment, err := clientset.AppsV1().Deployments(os.Getenv("NAMESPACE")).Get(context.Background(), pname, metav1.GetOptions{})
+	GetDeployment, err := clientset.AppsV1().Deployments(pname).Get(context.Background(), pname, metav1.GetOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -36,7 +40,7 @@ func DeploymentDetail(pname string) (*appsv1.Deployment, error) {
 
 func ServiceDetail(pname string) (*v1.Service, error) {
 	clientset := internal.GetConfig()
-	GetService, err := clientset.CoreV1().Services(os.Getenv("NAMESPACE")).Get(context.Background(), pname, metav1.GetOptions{})
+	GetService, err := clientset.CoreV1().Services(pname).Get(context.Background(), pname, metav1.GetOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, err

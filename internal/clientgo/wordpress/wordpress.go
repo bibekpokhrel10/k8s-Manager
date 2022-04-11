@@ -6,14 +6,7 @@ import (
 
 type WordPress struct{}
 
-func NewWordPress(wp *WordPress) clientgo.AppInterface {
-	if wp == nil {
-		return nil
-	}
-	return wp
-}
-
 func NewWordpressApp() clientgo.AppInterface {
-	w := NewWordPress(&WordPress{})
+	w := &WordPress{}
 	return w
 }
