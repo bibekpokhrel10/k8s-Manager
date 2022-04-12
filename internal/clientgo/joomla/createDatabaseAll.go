@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"k8smanager/internal"
+	"k8smanager/internal/clientgo"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,7 +15,8 @@ import (
 
 func CreateSecretKey(wname string) {
 	clientset := internal.GetConfig()
-	secretClinet := clientset.CoreV1().Secrets(wname)
+	namespace := clientgo.GetNamespace("joomla", wname)
+	secretClinet := clientset.CoreV1().Secrets(namespace)
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: wname + "-mysql-pass",
@@ -47,12 +49,13 @@ func CreateSecretKey(wname string) {
 
 func CreateDatabasePvc(pname string) error {
 	clinetset := internal.GetConfig()
-	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(pname)
+	namespace := clientgo.GetNamespace("joomla", pname)
+	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(namespace)
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pname + "-mysql-pv-claim",
-			Namespace: pname,
+			Namespace: namespace,
 			Labels: map[string]string{
 				"app": pname,
 			},
@@ -80,7 +83,8 @@ func CreateDatabasePvc(pname string) error {
 
 func CreateDatabaseDeployment(dname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments(dname)
+	namespace := clientgo.GetNamespace("joomla", dname)
+	deploymentsClient := clientset.AppsV1().Deployments(namespace)
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: dname + "-mysql",
@@ -157,12 +161,13 @@ func CreateDatabaseDeployment(dname string) error {
 
 func CreateDatabaseService(dname string) error {
 	clientset := internal.GetConfig()
-	servicesClinet := clientset.CoreV1().Services(dname)
+	namespace := clientgo.GetNamespace("joomla", dname)
+	servicesClinet := clientset.CoreV1().Services(namespace)
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dname + "-mysql",
-			Namespace: dname,
+			Namespace: namespace,
 
 			Labels: map[string]string{
 				"app": dname,

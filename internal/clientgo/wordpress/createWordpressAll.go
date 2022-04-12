@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"k8smanager/internal"
+	"k8smanager/internal/clientgo"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,7 +15,8 @@ import (
 
 func CreateWordpressDeployment(wname string) error {
 	clientset := internal.GetConfig()
-	deploymentsClient := clientset.AppsV1().Deployments(wname)
+	namespace := clientgo.GetNamespace("wordpress", wname)
+	deploymentsClient := clientset.AppsV1().Deployments(namespace)
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -80,7 +82,7 @@ func CreateWordpressDeployment(wname string) error {
 							Name: wname + "-wordpress-persistent-storage",
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: wname + "-wp-pv-claim",
+									ClaimName: wname + "-pv-claim",
 								},
 							},
 						},
@@ -104,7 +106,7 @@ func int32ptr(i int32) *int32 {
 	return &i
 }
 
-func CheckNamespace(namespace string) error {
+func CheckIfNamespaceExist(namespace string) error {
 	clientset := internal.GetConfig()
 	_, err := clientset.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{})
 	if err != nil {
@@ -116,21 +118,22 @@ func CheckNamespace(namespace string) error {
 
 func CreateWordpressService(wname string, port int32) error {
 	clientset := internal.GetConfig()
-	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: wname}}
-	err := CheckNamespace(wname)
+	namespace := clientgo.GetNamespace("wordpress", wname)
+	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+	err := CheckIfNamespaceExist(namespace)
 	if err != nil {
 		_, err = clientset.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
 		if err != nil {
-			log.Error("Failed to create namespace" + wname)
+			log.Error("Failed to create namespace" + namespace)
 			return err
 		}
-		log.Info("Created Namespace " + wname)
+		log.Info("Created Namespace " + namespace)
 	}
-	servicesClinet := clientset.CoreV1().Services(wname)
+	servicesClinet := clientset.CoreV1().Services(namespace)
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wname,
-			Namespace: wname,
+			Namespace: namespace,
 			Labels: map[string]string{
 				"app": wname,
 			},
@@ -163,12 +166,13 @@ func CreateWordpressService(wname string, port int32) error {
 
 func CreateWordpressPVC(pname string) error {
 	clinetset := internal.GetConfig()
-	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(pname)
+	namespace := clientgo.GetNamespace("wordpress", pname)
+	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(namespace)
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pname + "-wp-pv-claim",
-			Namespace: pname,
+			Name:      pname + "-pv-claim",
+			Namespace: namespace,
 			Labels: map[string]string{
 				"app": pname,
 			},

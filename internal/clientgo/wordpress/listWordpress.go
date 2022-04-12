@@ -13,7 +13,8 @@ import (
 func (wp *WordPress) List(name string) (clientgo.ListNames, error) {
 	Names := clientgo.ListNames{}
 	clientset := internal.GetConfig()
-	servicelist, err := clientset.CoreV1().Services(name).List(context.Background(), metav1.ListOptions{})
+	namespace := clientgo.GetNamespace("wordpress", name)
+	servicelist, err := clientset.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
 	var getErr error
 	if err != nil {
 		log.Error(err)
@@ -23,7 +24,7 @@ func (wp *WordPress) List(name string) (clientgo.ListNames, error) {
 		Names.Service = append(Names.Service, service.Name)
 	}
 
-	deploymentlist, err := clientset.AppsV1().Deployments(name).List(context.Background(), metav1.ListOptions{})
+	deploymentlist, err := clientset.AppsV1().Deployments(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		getErr = err
@@ -32,7 +33,7 @@ func (wp *WordPress) List(name string) (clientgo.ListNames, error) {
 		Names.Deployment = append(Names.Deployment, deploy.Name)
 	}
 
-	podlist, err := clientset.CoreV1().Pods(name).List(context.Background(), metav1.ListOptions{})
+	podlist, err := clientset.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		getErr = err
@@ -41,7 +42,7 @@ func (wp *WordPress) List(name string) (clientgo.ListNames, error) {
 		Names.Pod = append(Names.Pod, pod.Name)
 	}
 
-	pvclist, err := clientset.CoreV1().PersistentVolumeClaims(name).List(context.Background(), metav1.ListOptions{})
+	pvclist, err := clientset.CoreV1().PersistentVolumeClaims(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error(err)
 		getErr = err

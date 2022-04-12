@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"k8smanager/internal"
+	"k8smanager/internal/clientgo"
 
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -29,7 +30,8 @@ func (wp *WordPress) Detail(pname string) (*appsv1.Deployment, *v1.Service, erro
 
 func DeploymentDetail(pname string) (*appsv1.Deployment, error) {
 	clientset := internal.GetConfig()
-	GetDeployment, err := clientset.AppsV1().Deployments(pname).Get(context.Background(), pname, metav1.GetOptions{})
+	namespace := clientgo.GetNamespace("wordpress", pname)
+	GetDeployment, err := clientset.AppsV1().Deployments(namespace).Get(context.Background(), pname, metav1.GetOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -39,7 +41,8 @@ func DeploymentDetail(pname string) (*appsv1.Deployment, error) {
 
 func ServiceDetail(pname string) (*v1.Service, error) {
 	clientset := internal.GetConfig()
-	GetService, err := clientset.CoreV1().Services(pname).Get(context.Background(), pname, metav1.GetOptions{})
+	namespace := clientgo.GetNamespace("wordpress", pname)
+	GetService, err := clientset.CoreV1().Services(namespace).Get(context.Background(), pname, metav1.GetOptions{})
 	if err != nil {
 		log.Error(err)
 		return nil, err

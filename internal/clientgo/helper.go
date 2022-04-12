@@ -6,3 +6,13 @@ type ListNames struct {
 	Pod        []string
 	Pvc        []string
 }
+
+func GetNamespace(app string, name string) string {
+	if app == "wordpress" {
+		return name + "-wp"
+	} else if app == "joomla" {
+		return name + "-joomla"
+	} else {
+		return ""
+	}
+}

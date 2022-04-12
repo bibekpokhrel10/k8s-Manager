@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"k8smanager/internal/clientgo"
 
@@ -32,12 +30,11 @@ func AppCreate(c *gin.Context) {
 		log.Error(err)
 		return
 	}
-	name := strings.Join(strings.Fields(reqApp.Name), "")
-	re, err := regexp.Compile(`[^\w]`)
+	re, err := regexp.Compile(`[^(a-z)(A-Z)(0-9)-]`)
 	if err != nil {
 		log.Fatal(err)
 	}
-	name = re.ReplaceAllString(name, "")
+	name := re.ReplaceAllString(reqApp.Name, "")
 	p, err := strconv.Atoi(reqApp.Port)
 	if err != nil {
 		log.Error(err)
@@ -111,13 +108,11 @@ func ListAll(c *gin.Context) {
 func GetDetails(c *gin.Context) {
 	appname := c.Request.URL.Query().Get("app")
 	name := c.Request.URL.Query().Get("name")
-
-	fmt.Println(name)
 	var ap clientgo.AppInterface
 	if appname == "wordpress" {
 		ap = wordpress.NewWordpressApp()
 	} else if appname == "joomla" {
-		ap = wordpress.NewWordpressApp()
+		ap = joomla.NewJoomlaApp()
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong Details Name"})
 		return
@@ -127,8 +122,8 @@ func GetDetails(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{name + "Deployment Details": Deploymentdetail,
-		name + "Service Details": Servicedetail})
+	c.JSON(http.StatusOK, gin.H{name + " Deployment Details ": Deploymentdetail,
+		name + " Service Details ": Servicedetail})
 
 }
 
@@ -160,7 +155,7 @@ func AppUpdate(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 			return
 		}
-		c.JSON(201, gin.H{"Updated Deployment": "Success"})
+		c.JSON(201, gin.H{"Updated Deployment replica to " + reqApp.Replica: "Success"})
 		return
 	case "service":
 		nport, err := strconv.Atoi(reqApp.Port)
@@ -173,7 +168,7 @@ func AppUpdate(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.JSON(201, gin.H{"Updated Service Port number": true})
+		c.JSON(201, gin.H{"Updated Service Port number to " + reqApp.Port: true})
 		return
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong Object Name"})
