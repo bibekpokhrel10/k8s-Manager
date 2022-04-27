@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (jo *Joomla) Update(n int32, pname string, aname string) error {
+func (jo *Joomla) Update(n int32, pname string, aname string, enable string) error {
 	switch aname {
 	case "deployment":
 		err := UpdateDeployment(n, pname)

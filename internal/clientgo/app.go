@@ -9,6 +9,6 @@ type AppInterface interface {
 	List(string) (ListNames, error)
 	Detail(string) (*appsv1.Deployment, *v1.Service, error)
 	Create(string, int32) error
-	Update(int32, string, string) error
+	Update(int32, string, string, string) error
 	Delete(string) error
 }

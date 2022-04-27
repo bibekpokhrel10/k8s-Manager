@@ -24,6 +24,10 @@ func (wp *WordPress) Create(wname string, port int32) error {
 		if err != nil {
 			return err
 		}
+		err = CreateHttpProxy(wname)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	return err

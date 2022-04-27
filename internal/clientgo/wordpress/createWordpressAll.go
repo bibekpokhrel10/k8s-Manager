@@ -2,6 +2,7 @@ package wordpress
 
 import (
 	"context"
+	"os"
 
 	"k8smanager/internal"
 	"k8smanager/internal/clientgo"
@@ -11,13 +12,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func CreateWordpressDeployment(wname string) error {
 	clientset := internal.GetConfig()
 	namespace := clientgo.GetNamespace("wordpress", wname)
 	deploymentsClient := clientset.AppsV1().Deployments(namespace)
-
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: wname,
@@ -141,6 +146,7 @@ func CreateWordpressService(wname string, port int32) error {
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
+					Name:     wname,
 					Port:     80,
 					Protocol: "TCP",
 					NodePort: port,
@@ -167,6 +173,7 @@ func CreateWordpressService(wname string, port int32) error {
 func CreateWordpressPVC(pname string) error {
 	clinetset := internal.GetConfig()
 	namespace := clientgo.GetNamespace("wordpress", pname)
+
 	pvcClinet := clinetset.CoreV1().PersistentVolumeClaims(namespace)
 
 	pvc := &corev1.PersistentVolumeClaim{
@@ -195,5 +202,56 @@ func CreateWordpressPVC(pname string) error {
 		return err
 	}
 	log.Info("Created Wordpress PVC")
+	return nil
+}
+
+func CreateHttpProxy(wname string) error {
+	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return err
+	}
+	httpproxy := map[string]interface{}{
+		"apiVersion": "projectcontour.io/v1",
+		"kind":       "HTTPProxy",
+		"metadata": map[string]interface{}{
+			"name":      wname,
+			"namespace": clientgo.GetNamespace("wordpress", wname),
+			"annotations": map[string]string{
+				"projectcontour.io/ingress.class": "wordpress-01",
+			},
+		},
+		"spec": map[string]interface{}{
+
+			"routes": []map[string]interface{}{
+				{
+					"services": []map[string]interface{}{
+						{
+							"name": wname,
+							"port": 80,
+						}}},
+				{
+					"conditions": []map[string]interface{}{{
+						"prefix": "/filemanager",
+					}},
+					"services": []map[string]interface{}{{
+						"name": wname,
+						"port": 8080,
+					}},
+				},
+			},
+		},
+	}
+
+	unstructuredObj := &unstructured.Unstructured{Object: httpproxy}
+	dd, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	deploymentRes := schema.GroupVersionResource{Group: "projectcontour.io", Version: "v1", Resource: "httpproxies"}
+	result, err := dd.Resource(deploymentRes).Namespace(clientgo.GetNamespace("wordpress", wname)).Create(context.Background(), unstructuredObj, v1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+	log.Println(result)
 	return nil
 }

@@ -20,6 +20,7 @@ type RequestApp struct {
 	App     string `json:"app"`
 	Object  string `json:"object"`
 	Replica string `json:"replica"`
+	Enable  string `json:"enable"`
 }
 
 func AppCreate(c *gin.Context) {
@@ -150,7 +151,7 @@ func AppUpdate(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, err.Error())
 			return
 		}
-		err = ap.Update(int32(replica), reqApp.Name, reqApp.Object)
+		err = ap.Update(int32(replica), reqApp.Name, reqApp.Object, reqApp.Enable)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 			return
@@ -163,12 +164,23 @@ func AppUpdate(c *gin.Context) {
 			log.Error(err)
 			return
 		}
-		err = ap.Update(int32(nport), reqApp.Name, reqApp.Object)
+		err = ap.Update(int32(nport), reqApp.Name, reqApp.Object, reqApp.Enable)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.JSON(201, gin.H{"Updated Service Port number to " + reqApp.Port: true})
+		return
+	case "filemanager":
+		log.Info("I am inside file top")
+		err = ap.Update(int32(1), reqApp.Name, reqApp.Object, reqApp.Enable)
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, err.Error())
+			return
+		}
+		log.Info("I am inside file")
+		c.JSON(201, gin.H{"Status": "Successfull"})
 		return
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Wrong Object Name"})
