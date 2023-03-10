@@ -10,8 +10,8 @@ import (
 
 func RouterHandle() {
 	r := gin.Default()
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"API Health": "OK"})
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Welcome to K8s Manager Page"})
 	})
 	r.POST("/create", controllers.AppCreate)
 	r.DELETE("/delete", controllers.AppDelete)
