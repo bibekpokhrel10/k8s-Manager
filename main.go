@@ -17,7 +17,7 @@ func main() {
 	// proxyURL, _ := url.Parse(proxyString)
 
 	// rawURL := "http://172.19.0.3:32224"
-	// url, _ := url.Parse(rawURL)
+	// url, _ := url.Parse(rawURL) hello
 
 	// transport := &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 	// client := &http.Client{Transport: transport}
